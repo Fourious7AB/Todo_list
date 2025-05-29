@@ -1,36 +1,61 @@
-document.addEventListener('DOMContentLoaded', ()=>{
-    const todoInput=document.getElementById("submit");
-const addTaskButton=document.getElementById("todo-list");
-const todoList=document.getElementById("todo-input");
-const tasks=JSON.parse(localStorage.getItem('tasks'))||[];// Load tasks from localStorage or initialize an empty array
+document.addEventListener('DOMContentLoaded', () => {
+    const todoInput = document.getElementById("todo-input");
+    const todoForm = document.getElementById("todo-form");
+    const todoList = document.getElementById("todo-list");
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-tasks.forEach(task=>renderTasks(task));// Render existing tasks from localStorage
-  
-addTaskButton.addEventListener("click",()=>{// Add a new task
-    const taskText=todoInput.value.trim();
-    if(taskText=="")return;// Prevent adding empty tasks
+    // Render all tasks on load
+    tasks.forEach(task => renderTask(task));
 
+    // Handle form submission
+    todoForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const taskText = todoInput.value.trim();
+        if (taskText === "") return;
 
-    const newTask={// Create a new task object
-        id:Date.now(),
-        text:taskText,
-        completed:false
+        const newTask = {
+            id: Date.now(),
+            text: taskText,
+            completed: false
+        };
+        tasks.push(newTask);
+        saveTasks();
+        renderTask(newTask);
+        // Clear input field after adding task
+        renderTask(newTask);
+        todoInput.value = "";
+    });
+
+    // Render a single task
+    function renderTask(task) {
+        const li = document.createElement("li");
+        li.setAttribute("id", task.id);
+        if(task.completed) {
+            li.classList.add("completed");
+        }
+        li.innerHTML = `
+            <span>${task.text}</span>
+            <button class="delete-btn">Delete</button>
+        `;
+        li.addEventListener('click', (e) => {
+            if(e.target.tagName !== 'BUTTON') return;
+            task.completed = !task.completed;
+            li.classList.toggle("completed");
+            saveTasks();
+        });
+
+        li.querySelector('button').addEventListener('click', (e) => {
+            e.stopPropagation();// Prevent the click from toggling completion
+            tasks = tasks.filter(t => t.id === task.id);// Remove task from array
+            li.remove(); // Remove the task from the DOM
+            saveTasks();// Save updated tasks to localStorage
+        });
+       
+        todoList.appendChild(li);
     }
-    tasks.push(newTask);// Add the new task to the tasks array
-    saveTasks();// Save tasks to localStorage
-    todoInput.value="";// Clear the input field
-    console.log(tasks);
 
-
-
-});
-function renderTasks(tasks){// Render tasks
-        console.log(tasks.text);
-        
-}
-
-
-function saveTasks(){// localStorage
-    localStorage.setItem("tasks",JSON.stringify(tasks));
-}
+    // Save tasks to localStorage
+    function saveTasks() {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
 });
